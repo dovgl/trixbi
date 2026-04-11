@@ -69,7 +69,15 @@ export default function LanguageTrainer() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pairs, setPairs] = useState(() => {
     const saved = localStorage.getItem("tx-pairs");
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    const parsedPairs = JSON.parse(saved);
+    const savedSets = localStorage.getItem("tx-sets");
+    if (!savedSets) return parsedPairs;
+    const parsedSets = JSON.parse(savedSets);
+    const knownSetIds = new Set(parsedSets.map(s => s.id));
+    if (parsedPairs.every(p => knownSetIds.has(p.setId))) return parsedPairs;
+    const defaultSetId = parsedSets[0]?.id || "";
+    return parsedPairs.map(p => knownSetIds.has(p.setId) ? p : { ...p, setId: defaultSetId });
   });
   const [learned, setLearned] = useState(() => {
     const saved = localStorage.getItem("tx-learned");
