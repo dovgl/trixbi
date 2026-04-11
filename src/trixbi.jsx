@@ -164,6 +164,16 @@ export default function LanguageTrainer() {
   }, [sets, currentSetId]);
 
   useEffect(() => {
+    const knownSetIds = new Set(sets.map(s => s.id));
+    const defaultSetId = sets[0]?.id;
+    if (!defaultSetId) return;
+    setPairs(prev => {
+      if (prev.every(p => knownSetIds.has(p.setId))) return prev;
+      return prev.map(p => knownSetIds.has(p.setId) ? p : { ...p, setId: defaultSetId });
+    });
+  }, [sets]);
+
+  useEffect(() => {
     if (mode === "training" && inputRef.current) inputRef.current.focus();
   }, [currentIdx, feedback, mode]);
 
