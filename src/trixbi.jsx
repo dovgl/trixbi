@@ -125,9 +125,11 @@ export default function LanguageTrainer() {
   });
   const [showTrashedSets, setShowTrashedSets] = useState(false);
   const [correctAnswerCache, setCorrectAnswerCache] = useState("");
+  const [creatingSet, setCreatingSet] = useState(false);
   const inputRef = useRef(null);
   const xInputRef = useRef(null);
   const menuRef = useRef(null);
+  const newSetInputRef = useRef(null);
 
   const dark = theme === "dark";
   const t = {
@@ -176,6 +178,10 @@ export default function LanguageTrainer() {
   useEffect(() => {
     if (mode === "training" && inputRef.current) inputRef.current.focus();
   }, [currentIdx, feedback, mode]);
+
+  useEffect(() => {
+    if (creatingSet && newSetInputRef.current) newSetInputRef.current.focus();
+  }, [creatingSet]);
 
   useEffect(() => {
     if (error) {
@@ -295,7 +301,7 @@ export default function LanguageTrainer() {
   };
 
   const addSet = () => {
-    if (!newSetName.trim()) return;
+    if (!newSetName.trim()) { setCreatingSet(false); return; }
     const name = newSetName.trim();
     if (sets.find(s => s.name.toLowerCase() === name.toLowerCase())) {
       setError("OOOPS, that set exists already!");
@@ -305,6 +311,7 @@ export default function LanguageTrainer() {
     setSets(s => [...s, newSet]);
     setNewSetName("");
     setCurrentSetId(newSet.id);
+    setCreatingSet(false);
   };
 
   const removeSet = (id) => {
@@ -488,7 +495,10 @@ export default function LanguageTrainer() {
   const dismissWrong = () => { setFeedback(null); setAnswer(""); };
   const handleKeyDown = (e) => { if (e.key === "Enter") { feedback === "wrong" ? dismissWrong() : checkAnswer(); } };
   const handleAddKeyDown = (e) => { if (e.key === "Enter") addPair(); };
-  const handleSetKeyDown = (e) => { if (e.key === "Enter") addSet(); };
+  const handleSetKeyDown = (e) => {
+    if (e.key === "Enter") addSet();
+    if (e.key === "Escape") { setCreatingSet(false); setNewSetName(""); }
+  };
   const handleRenameKeyDown = (e) => { if (e.key === "Enter") confirmRenameSet(); };
 
   const completedCount = completed.length;
@@ -699,26 +709,35 @@ export default function LanguageTrainer() {
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <select value={currentSetId} onChange={e => setCurrentSetId(e.target.value)}
-            style={{ flex: 1, padding: "8px 10px", fontSize: 13, border: `1px solid ${t.borderInput}`, borderRadius: 8, outline: "none", background: t.bgInput, color: t.text }}>
-            {sets.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          {creatingSet ? (
+            <>
+              <input ref={newSetInputRef} value={newSetName} onChange={e => setNewSetName(e.target.value)}
+                onKeyDown={handleSetKeyDown} placeholder="New set name..."
+                style={{ flex: 1, padding: "8px 10px", fontSize: 13, border: `1px solid ${t.borderInput}`, borderRadius: 8, outline: "none", background: t.bgInput, color: t.text }} />
+              <button onClick={addSet}
+                style={{ padding: "8px 12px", fontSize: 13, background: t.accent, color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>
+                ✓
+              </button>
+              <button onClick={() => { setCreatingSet(false); setNewSetName(""); }}
+                style={{ padding: "8px 10px", fontSize: 13, background: "none", color: t.textSec, border: `1px solid ${t.borderInput}`, borderRadius: 8, cursor: "pointer" }}>
+                ✕
+              </button>
+            </>
+          ) : (
+            <select value={currentSetId} onChange={e => {
+              if (e.target.value === "__new__") { setCreatingSet(true); }
+              else setCurrentSetId(e.target.value);
+            }}
+              style={{ flex: 1, padding: "8px 10px", fontSize: 13, border: `1px solid ${t.borderInput}`, borderRadius: 8, outline: "none", background: t.bgInput, color: t.text }}>
+              {sets.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              <option value="__new__">＋ New set…</option>
+            </select>
+          )}
           <button onClick={addPair} style={{
             padding: "8px 18px", fontSize: 15, background: t.accent, color: "#fff",
             border: "none", borderRadius: 8, cursor: "pointer"
           }}>+ Add</button>
         </div>
-      </div>
-
-      {/* Create new set */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-        <input value={newSetName} onChange={e => setNewSetName(e.target.value)} onKeyDown={handleSetKeyDown}
-          placeholder="New set name..."
-          style={{ flex: 1, padding: "8px 12px", fontSize: 13, border: `1px solid ${t.borderInput}`, borderRadius: 8, outline: "none", background: t.bgInput, color: t.text }} />
-        <button onClick={addSet} style={{
-          padding: "8px 14px", fontSize: 13, background: dark ? "#3a3a55" : "#f3f4f6", color: t.text,
-          border: `1px solid ${t.borderInput}`, borderRadius: 8, cursor: "pointer"
-        }}>+ Set</button>
       </div>
 
       {/* Unselect */}
