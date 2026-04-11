@@ -77,7 +77,10 @@ export default function LanguageTrainer() {
   });
   const [sets, setSets] = useState(() => {
     const saved = localStorage.getItem("tx-sets");
-    return saved ? JSON.parse(saved) : [{ id: generateId(), name: "General" }];
+    if (saved) return JSON.parse(saved);
+    const initial = [{ id: generateId(), name: "General" }];
+    localStorage.setItem("tx-sets", JSON.stringify(initial));
+    return initial;
   });
   const [mastery, setMastery] = useState(() => {
     const saved = localStorage.getItem("tx-mastery");
