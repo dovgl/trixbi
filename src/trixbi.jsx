@@ -158,6 +158,12 @@ export default function LanguageTrainer() {
   useEffect(() => { localStorage.setItem("tx-theme", theme); }, [theme]);
 
   useEffect(() => {
+    if (sets.length > 0 && !sets.find(s => s.id === currentSetId)) {
+      setCurrentSetId(sets[0].id);
+    }
+  }, [sets, currentSetId]);
+
+  useEffect(() => {
     if (mode === "training" && inputRef.current) inputRef.current.focus();
   }, [currentIdx, feedback, mode]);
 
